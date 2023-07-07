@@ -1,6 +1,8 @@
 import torch
 import transformers
 import torch.nn as nn
+import warnings
+warnings.filterwarnings("ignore")
 from transformers import BartForConditionalGeneration, BartModel, BartConfig
 
 class Model(nn.Module):
@@ -14,11 +16,17 @@ class Model(nn.Module):
                                   dropout = self.config.dropout,
                                   decoder_ffn_dim = self.config.hidden_dim,
                                   encoder_ffn_dim = self.config.hidden_dim,
-                                  encoder_attention_head = self.config.nhead,
-                                  decoder_attention_head = self.config.nhead)
+                                  encoder_attention_heads = self.config.nhead,
+                                  decoder_attention_heads = self.config.nhead,
+                                  max_position_embeddings = self.config.maximum_sequence_length
+                                  )
         
-        self.bart = BartForConditionalGeneration.from_pretrained(f'facebook/{self.config.model_name}')
-        self.bart.config = configuration
+        self.bart_pretrained = BartForConditionalGeneration.from_pretrained(f'facebook/{self.config.model_name}')
+        self.bart = BartForConditionalGeneration(config = configuration)
+        
+        if self.config.pretrain:
+            self.bart.load_state_dict(self.bart_pretrained.state_dict()) #Keep the hyperparameters exact to the pretrained models
+            print("==> Loaded the pre-trained weights")
     
     def forward(self, input_ids, decoder_input_ids):
         outputs = self.bart(input_ids=input_ids, decoder_input_ids=decoder_input_ids)
