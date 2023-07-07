@@ -28,7 +28,7 @@ class Predictor:
         else:
             self.l = ['Feynman_Diagram', 'Squared_Amplitude']
         for ln in self.l:
-            self.vocab_transform[ln] = build_vocab_from_iterator(self.yeild_tokens(ln), specials=special_symbols, min_freq=1,
+            self.vocab_transform[ln] = build_vocab_from_iterator(self.yeild_tokens(ln), specials=special_symbols, min_freq=1, 
                                                                  special_first=True, max_tokens=config.vocab_size)
             
         self.text_transform = self.sequential_transforms(self.token_transform, #Tokenization
