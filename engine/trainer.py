@@ -30,7 +30,7 @@ class Trainer:
         self.stop_training = False
         
         self.current_epoch = 0
-        self.best_accuracy = 0
+        self.best_accuracy = 0 
         self.best_val_loss = 1e6
         self.train_loss_list = []
         self.valid_loss_list = []
@@ -88,9 +88,7 @@ class Trainer:
         return scheduler
 
     def _prepare_dataloaders(self):
-        datasets = get_dataset_from_config(self.config)
-        if self.config.model_name != "seq2seq_transformer":
-            collate_fn = None
+        datasets=get_dataset_from_config(self.config)
         dataloaders = {
             'train': torch.utils.data.DataLoader(datasets['train'], \
                 batch_size=self.config.training_batch_size, shuffle=self.config.train_shuffle, \
@@ -145,6 +143,8 @@ class Trainer:
                 # Calculate loss
                 loss = self.criterion(logits.reshape(-1, logits.shape[-1]), tgt[1:, :].reshape(-1))
             else:
+                src = src.transpose(0, 1)
+                tgt = tgt.transpose(0, 1)
                 input_ids = torch.squeeze(src, 1)
                 target_ids = torch.squeeze(tgt, 1)[:, :-1]
                 outputs = self.model(input_ids, target_ids)
@@ -162,6 +162,9 @@ class Trainer:
             if self.config.clip_grad_norm > 0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip_grad_norm)
             self.optimizer.step()
+            
+            if self.config.debug:
+                break
             
         return running_loss.avg
     
@@ -186,6 +189,8 @@ class Trainer:
                     y_pred = torch.argmax(logits.reshape(-1, logits.shape[-1]), 1)
                     correct = (y_pred == tgt[1:, :].reshape(-1)).cpu().numpy().mean()
                 else:
+                    src = src.transpose(0, 1)
+                    tgt = tgt.transpose(0, 1)
                     input_ids = torch.squeeze(src, 1)
                     target_ids = torch.squeeze(tgt, 1)[:, :-1]
                     outputs = self.model(input_ids, target_ids)
@@ -199,13 +204,17 @@ class Trainer:
                 running_loss.update(loss.item(), bs)
                 running_acc.update(correct, bs)
                 pbar.set_postfix(loss=running_loss.avg, accuracy=running_acc.avg)
+                
+                if self.config.debug:
+                    break
+                
         return running_acc.avg, running_loss.avg
     
     def _save_model(self, checkpoint_name):
         torch.save({
                 "epoch": self.current_epoch + 1,
                 "state_dict" : self.model.state_dict(),
-                "optimizer" : self.optimizer.state_dict(),
+                'optimizer' : self.optimizer.state_dict(),
                 "train_loss_list": self.train_loss_list,
                 "valid_loss_list": self.valid_loss_list,
                 "valid_accuracy_list": self.valid_accuracy_list,
@@ -235,7 +244,7 @@ class Trainer:
     def fit(self):
         start_epoch = self.current_epoch
         for self.current_epoch in range(start_epoch, self.config.epochs):
-            training_loss = self._train_epoch()
+            training_loss = self._train_epoch() 
             valid_accuracy, valid_loss = self.evaluate("valid")
             
             self.train_loss_list.append(round(training_loss, 4))
@@ -254,7 +263,7 @@ class Trainer:
             
             self.on_eval_end(valid_accuracy, valid_loss)
 
-            if self.stop_training:
+            if self.stop_training or self.config.debug:
                 break
             
         self.load_best_model()
