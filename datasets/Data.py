@@ -13,7 +13,7 @@ from typing import Iterable, List
 # Define special symbols and indices
 BOS_IDX, PAD_IDX, EOS_IDX, UNK_IDX = 0, 1, 2, 3
 # Make sure the tokens are in order of their indices to properly insert them in vocab
-special_symbols = ['<s>', '<pad>', '</s>', 'unk']
+special_symbols = ['<s>', '<pad>', '</s>', 'unk'] 
 
 class Transform:
     def __init__(self, df, config):
@@ -30,7 +30,7 @@ class Transform:
         
         for ln in self.l:
             self.token_transform[ln] = get_tokenizer(tokenizer=None, language="en")
-            self.vocab_transform[ln] = build_vocab_from_iterator(self.yeild_tokens(ln), specials=special_symbols, min_freq=1,
+            self.vocab_transform[ln] = build_vocab_from_iterator(self.yeild_tokens(ln), specials=special_symbols, min_freq=1, 
                                                                  special_first=True, max_tokens=self.vocab_size)
             self.vocab_transform[ln].set_default_index(UNK_IDX)
             
@@ -58,7 +58,7 @@ class Transform:
                                                                  self.vocab_transform[ln], #Numericalization
                                                                  self.tensor_transform) # Add BOS/EOS and create tensor
     def transform(self, data):
-        return (self.text_transform[self.l[0]](data[self.l[0]]),
+        return (self.text_transform[self.l[0]](data[self.l[0]]), 
                 self.text_transform[self.l[1]](data[self.l[1]]))
     
 def get_transform(config):
@@ -80,22 +80,24 @@ class Dataset(nn.Module):
         self.config = config
         self.path = 'data/'+self.config.dataset_name
         self.split = '/' + split + '.csv'
-        self.df = pd.DataFrame()
+        self.df = pd.DataFrame() 
         self.df = pd.read_csv(self.path+self.split)
+        if "Amplitude" in self.config.dataset_name:
+            self.l = ['Amplitude', 'Squared_Amplitude']
+        else:
+            self.l = ['Feynman_Diagram', 'Squared_Amplitude']
         
     def __len__(self):
         return len(self.df)
     
     def __getitem__(self, idx):
-        if self.config.model_name == "seq2seq_transformer":
+        if self.config.tokenizer_type == "seq2seq":
             return self.transform.transform(self.df.iloc[idx])
         else:
-            ampl_tokens = self.transform.encode(self.df.iloc[idx]['Amplitude'], add_special_tokens=True, truncation=True,
-                                                max_length=self.config.maximum_sequence_length, return_tensors="pt", padding='max_length')
-            sq_ampl_tokens = self.transform.encode(self.df.iloc[idx]['Squared_Amplitude'], add_special_tokens=True, truncation=True,
-                                                   max_length=self.config.maximum_sequence_length, return_tensors="pt", padding='max_length')
+            ampl_tokens = self.transform.encode(self.df.iloc[idx][self.l[0]])
+            sq_ampl_tokens = self.transform.encode(self.df.iloc[idx][self.l[1]])
         
-            return ampl_tokens, sq_ampl_tokens
+            return (torch.tensor(ampl_tokens), torch.tensor(sq_ampl_tokens))
     
     @staticmethod
     def is_valid_dataset_name(dataset_name):
@@ -111,7 +113,7 @@ class Dataset(nn.Module):
         if not Dataset.is_valid_dataset_name(dataset_name):
             raise ValueError('Invalid dataset: {}'.format(model_name))
             
-        if config.model_name == "seq2seq_transformer":
+        if config.tokenizer_type == "seq2seq":
             trns_form = get_transform(config)
         else:
             trns_form = BartTokenizer.from_pretrained(f'facebook/{config.model_name}')
