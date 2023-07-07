@@ -7,6 +7,7 @@ class Config:
     root_dir: Optional[str] = "./"
     device: Optional[str] = "cuda"
     save_at_epochs: Optional[list] = field(default_factory=list)
+    debug: Optional[bool] = False
         
     #training parameters
     epochs: Optional[int] = 60
@@ -27,7 +28,7 @@ class Config:
 
     # optimizer parameters
     optimizer_type: Optional[str] = "adam" # sgd or adam
-    optimizer_lr: Optional[float] = 0.0001
+    optimizer_lr: Optional[float] = 0.0001    
     optimizer_momentum: Optional[float] = 0.9
     optimizer_weight_decay: Optional[float] = 0.0
     optimizer_no_decay: Optional[list] = field(default_factory=list)
@@ -36,7 +37,8 @@ class Config:
     # dataset parameters
     dataset_name: Optional[str] = "QCD" # QCD, QED,
     vocab_size: Optional[int] = 2246
-    maximum_sequence_length: Optional[int] = 256
+    tokenizer_type: Optional[str] = "seq2seq"
+    maximum_sequence_length: Optional[int] = 256 
         
     # Model Parameters
     model_name: Optional[str] = "seq2seq_transformer"
@@ -46,6 +48,7 @@ class Config:
     num_encoder_layers: Optional[int] = 3
     num_decoder_layers: Optional[int] = 3
     dropout: Optional[int] = 0.1
+    pretrain: Optional[bool] = False
         
     def print_config(self):
         print("="*50+"\nConfig\n"+"="*50)
@@ -59,5 +62,5 @@ class Config:
             f.write("="*50+"\nConfig\n"+"="*50 + "\n")
             for field in fields(self):
                 f.write(field.name.ljust(30) + ": " + str(getattr(self, field.name)) + "\n")
-            f.write("="*50)
+            f.write("="*50)   
         
