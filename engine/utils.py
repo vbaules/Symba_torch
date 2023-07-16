@@ -81,8 +81,6 @@ def sequence_accuracy(config, device):
         original_tokens, predicted_tokens = predictor.predict(random_df.iloc[i], raw_tokens=True)
         original_tokens = original_tokens.tolist()
         predicted_tokens = predicted_tokens.tolist()
-        print(original_tokens)
-        print(predicted_tokens)
         if original_tokens == predicted_tokens:
             count = count+1
         pbar.set_postfix(seq_accuracy=count/(i+1))
