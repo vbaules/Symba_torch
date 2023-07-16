@@ -2,8 +2,11 @@ import os
 import random
 
 import numpy as np
+import pandas as pd
 import torch
+from tqdm import tqdm
 from torch.nn.utils.rnn import pad_sequence
+from engine.predictor import Predictor
 PAD_IDX =  1
 
 class AverageMeter:
@@ -63,3 +66,25 @@ def collate_fn(batch):
     src_batch = pad_sequence(src_batch, padding_value=PAD_IDX)
     tgt_batch = pad_sequence(tgt_batch, padding_value=PAD_IDX)
     return src_batch, tgt_batch
+
+def sequence_accuracy(config, device):
+    predictor = Predictor(config, device)
+    test_df = pd.read_csv('./data/'+config.dataset_name+'/test.csv')
+    count = 0
+    length = 500
+    if config.debug:
+        length = 10
+    random_df = test_df.sample(n=length, random_state=config.seed)
+    pbar = tqdm(range(length))
+    pbar.set_description("Seq_Acc_Cal")
+    for i in pbar:
+        original_tokens, predicted_tokens = predictor.predict(random_df.iloc[i], raw_tokens=True)
+        original_tokens = original_tokens.tolist()
+        predicted_tokens = predicted_tokens.tolist()
+        print(original_tokens)
+        print(predicted_tokens)
+        if original_tokens == predicted_tokens:
+            count = count+1
+        pbar.set_postfix(seq_accuracy=count/(i+1))
+    return count/length
+    
