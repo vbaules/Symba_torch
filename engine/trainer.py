@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 import torch
 from torch.utils.data import DataLoader
 from timeit import default_timer as timer
-from engine.utils import create_mask, seed_everything, AverageMeter, collate_fn
+from engine.utils import create_mask, seed_everything, AverageMeter, collate_fn, sequence_accuracy
 from datasets import get_dataset_from_config
 from models import get_model_from_config
 
@@ -30,11 +30,11 @@ class Trainer:
         self.stop_training = False
         
         self.current_epoch = 0
-        self.best_accuracy = 0 
+        self.best_accuracy = -12345
         self.best_val_loss = 1e6
         self.train_loss_list = []
         self.valid_loss_list = []
-        self.valid_accuracy_list = []
+        self.valid_accuracy_tok_list = []
         
         self.config.print_config()
         
@@ -173,7 +173,7 @@ class Trainer:
         pbar = tqdm(self.dataloaders[phase], total=len(self.dataloaders[phase]))
         pbar.set_description(f"[{self.current_epoch+1}/{self.config.epochs}] {phase.capitalize()}")
         running_loss = AverageMeter()
-        running_acc = AverageMeter()
+        running_acc_tok = AverageMeter()
         
         with torch.no_grad():
             for src, tgt in pbar:
@@ -202,22 +202,22 @@ class Trainer:
                     
                 
                 running_loss.update(loss.item(), bs)
-                running_acc.update(correct, bs)
-                pbar.set_postfix(loss=running_loss.avg, accuracy=running_acc.avg)
+                running_acc_tok.update(correct, bs)
+                pbar.set_postfix(loss=running_loss.avg, tok_accuracy=running_acc_tok.avg)
                 
                 if self.config.debug:
                     break
                 
-        return running_acc.avg, running_loss.avg
+        return running_acc_tok.avg, running_loss.avg
     
     def _save_model(self, checkpoint_name):
         torch.save({
                 "epoch": self.current_epoch + 1,
-                "state_dict" : self.model.state_dict(),
-                'optimizer' : self.optimizer.state_dict(),
+                "state_dict": self.model.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
                 "train_loss_list": self.train_loss_list,
                 "valid_loss_list": self.valid_loss_list,
-                "valid_accuracy_list": self.valid_accuracy_list,
+                "valid_accuracy_tok_list": self.valid_accuracy_tok_list,
             }, os.path.join(self.root_dir, checkpoint_name))
         
     def _save_and_log(self, accuracy):
@@ -227,15 +227,14 @@ class Trainer:
             print(f"==> Saved checkpoint {self.current_epoch + 1}")
 
         self._save_model("checkpoint.pth")
-
         if accuracy>self.best_accuracy:
             print(f"==> Best Accuracy improved to {round(accuracy, 4)} from {self.best_accuracy}")
             self.best_accuracy = round(accuracy, 4)
             shutil.copyfile(os.path.join(self.root_dir, "checkpoint.pth"), os.path.join(self.root_dir, "model_best.pth"))
 
         ## Log results
-        data_list = [self.train_loss_list, self.valid_loss_list, self.valid_accuracy_list]
-        column_list = ['train_losses', 'valid_losses', 'valid_accuracy']
+        data_list = [self.train_loss_list, self.valid_loss_list, self.valid_accuracy_tok_list]
+        column_list = ['train_losses', 'valid_losses', 'token_valid_accuracy']
         
         df_data = np.array(data_list).T
         df = pd.DataFrame(df_data, columns=column_list)
@@ -245,11 +244,11 @@ class Trainer:
         start_epoch = self.current_epoch
         for self.current_epoch in range(start_epoch, self.config.epochs):
             training_loss = self._train_epoch() 
-            valid_accuracy, valid_loss = self.evaluate("valid")
+            valid_accuracy_tok, valid_loss = self.evaluate("valid")
             
             self.train_loss_list.append(round(training_loss, 4))
             self.valid_loss_list.append(round(valid_loss, 4))
-            self.valid_accuracy_list.append(round(valid_accuracy, 4))
+            self.valid_accuracy_tok_list.append(round(valid_accuracy_tok, 4))
             
             if self.scheduler == "multi_step":
                 self.scheduler.step()
@@ -259,17 +258,19 @@ class Trainer:
             if valid_loss<self.best_val_loss:
                 self.best_val_loss = valid_loss
 
-            self._save_and_log(valid_accuracy)
+            self._save_and_log(valid_accuracy_tok)
             
-            self.on_eval_end(valid_accuracy, valid_loss)
+            self.on_eval_end(valid_accuracy_tok, valid_loss)
 
             if self.stop_training or self.config.debug:
                 break
             
         self.load_best_model()
-        test_accuracy, _ = self.evaluate("test")
+        test_accuracy_tok, _ = self.evaluate("test")
+        test_accuracy_seq = sequence_accuracy(self.config, self.device)
         f= open(os.path.join(self.root_dir, "score.txt"),"w+")
-        f.write(str(round(test_accuracy, 4)))
+        f.write(f"Token Accuracy = {(round(test_accuracy_tok, 4))}\n")
+        f.write(f"Sequence Accuracy = {(round(test_accuracy_seq, 4))}\n")
         f.close()
-        print(f"Test Accuracy: {round(test_accuracy, 4)} | Valid Accuracy: {self.best_accuracy}")
+        print(f"Test Accuracy: {round(test_accuracy_tok, 4)} | Valid Accuracy: {self.best_accuracy}")
         
