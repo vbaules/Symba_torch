@@ -14,7 +14,7 @@ pip install transformers
 ```
 After installing the required packages, clone this repository:
 ```bash
-git clone https://github.com/neerajanand321/SYMBA_PyTorch.git
+git clone https://github.com/neerajanand321/SYMBA_torch.git
 ```
 ### Training 
 Training can be done either using terminal or notebook
