@@ -25,4 +25,4 @@ python symba_trainer.py --experiment_name="Example" --model_name="seq2seq_transf
                         --dataset_name="QCD_Amplitude" --epochs=30 --learning_rate=0.0001 
 ```
 #### Using Notebook
-Refer to the [symba_example.ipynb](https://github.com/neerajanand321/SYMBA_PyTorch/blob/main/symba_example.ipynb).
+Refer to the [symba_example.ipynb](https://github.com/neerajanand321/Symba_torch/blob/main/symba_example.ipynb).
