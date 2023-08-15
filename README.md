@@ -1,4 +1,4 @@
-# SYMBA_PyTorch
+# Symba_torch
 
 This is the repository for my Google Summer of Code Project [Symbolic empirical representation of squared amplitudes in high-energy physics](https://summerofcode.withgoogle.com/programs/2023/projects/DLza6brS) 
 
@@ -14,7 +14,7 @@ pip install transformers
 ```
 After installing the required packages, clone this repository:
 ```bash
-git clone https://github.com/neerajanand321/SYMBA_torch.git
+git clone https://github.com/neerajanand321/Symba_torch.git
 ```
 ### Training 
 Training can be done either using terminal or notebook
