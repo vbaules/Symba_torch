@@ -17,9 +17,9 @@ After installing the required packages, clone this repository:
 git clone https://github.com/neerajanand321/Symba_torch.git
 ```
 ### Training 
-Training can be done either using terminal or notebook
+Training can be done either using terminal or notebook.
 #### Using Terminal
-Use the following command to train the network
+Use the following command to train the network:
 ```bash
 python symba_trainer.py --experiment_name="Example" --model_name="seq2seq_transformer" \
                         --dataset_name="QCD_Amplitude" --epochs=30 --learning_rate=0.0001 
