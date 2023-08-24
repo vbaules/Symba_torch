@@ -151,8 +151,8 @@ def create_vocab(config):
     help_dict = {'bart-base':'facebook/bart-base', 'bart-large':'facebook/bart-large', 'LED-base':'allenai/led-base-16384'}
     old_tokenizer = AutoTokenizer.from_pretrained(help_dict[model_name])
     
-    print(f"==> Training the tokenizer on {config.dataset_name}")
+    print(f"==> Training the tokenizer on {config.dataset_name}\n"}
     tokenizer = old_tokenizer.train_new_from_iterator(all_expressions, config.vocab_size)
     tokenizer.save_pretrained("./data/"+config.dataset_name+f"/{model_name}_tokenizer")
-    print("==> New Tokenizer Created")
+    print("==> New Tokenizer Created\n"}
     
