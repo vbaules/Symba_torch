@@ -35,7 +35,7 @@ class Model(nn.Module):
         
     def forward(self, input_ids, decoder_input_ids):
         output = self.LED(input_ids=input_ids, decoder_input_ids=decoder_input_ids)
-        return outputs
+        return output
     
     @staticmethod
     def is_valid_model_name(model_name):
