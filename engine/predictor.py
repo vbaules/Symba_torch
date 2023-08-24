@@ -101,7 +101,7 @@ class Predictor:
             src = self.text_transform[self.l[0]](src_sentence).view(-1, 1)
             num_tokens = src.shape[0]
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')#f"data/{self.dataset_name}/{self.model_name}_tokenizer")
+            self.tokenizer = AutoTokenizer.from_pretrained(f"data/{self.dataset_name}/{self.model_name}_tokenizer")
             src = self.tokenizer.encode(src_sentence, add_special_tokens=True, truncation=True, return_tensors="pt", max_length=512, padding="max_length")
             num_tokens = src.shape[1]
         src_mask = (torch.zeros(num_tokens, num_tokens)).type(torch.bool)
