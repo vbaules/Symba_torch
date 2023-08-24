@@ -38,6 +38,7 @@ class Config:
     dataset_name: Optional[str] = "QCD" # QCD, QED,
     vocab_size: Optional[int] = 2246
     tokenizer_type: Optional[str] = "seq2seq"
+    pretrained_tokenizer: Optional[bool] = False
     maximum_sequence_length: Optional[int] = 256 
         
     # Model Parameters
