@@ -13,7 +13,7 @@ from typing import Iterable, List
 # Define special symbols and indices
 BOS_IDX, PAD_IDX, EOS_IDX, UNK_IDX = 0, 1, 2, 3
 # Make sure the tokens are in order of their indices to properly insert them in vocab
-special_symbols = ['<s>', '<pad>', '</s>', 'unk'] 
+special_symbols = ['<s>', '<pad>', '</s>', '<unk>'] 
 
 class Transform:
     def __init__(self, df, config):
